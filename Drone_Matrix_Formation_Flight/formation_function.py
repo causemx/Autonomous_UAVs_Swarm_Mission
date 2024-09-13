@@ -2,8 +2,8 @@
 
 import time
 import math
-import dronekit
-from dronekit import connect
+import dronekit  # noqa: F401
+from dronekit import connect  # noqa: F401
 from dronekit import VehicleMode
 from dronekit import LocationGlobalRelative
 from dronekit import mavutil
@@ -11,7 +11,7 @@ import geopy
 from geopy.distance import vincenty
 import socket
 import threading
-import multiprocessing
+import multiprocessing  # noqa: F401
 import os
 
 # MAVLink Parameters to specify coordinate frame.
@@ -34,9 +34,9 @@ import os
 #=============================================================
 
 # Check connections to router.
-def CHECK_network_connection(router_host, wait_time=None):
+def CHECK_network_connection(vehicle, router_host, wait_time=None):
     print('{} - CHECK_network_connection({}) is started.'.format(time.ctime(), router_host))
-    if wait_time == None:
+    if wait_time is None:
         wait_time = 10 # Default wait time is 10 seconds.
     down_counter = 0
     while True:
@@ -62,12 +62,12 @@ def CHECK_network_connection(router_host, wait_time=None):
 
 # This function start server services.
 # Be sure define the ports as global variables before call this function.
-def start_SERVER_service(is_leader, local_host):
+def start_SERVER_service(vehicle, is_leader, local_host):
     # 1) Start send gps coordinate service.
-    threading.Thread(target=SERVER_send_gps_coordinate, args=(local_host,)).start()
+    threading.Thread(target=SERVER_send_gps_coordinate, args=(vehicle, local_host,)).start()
     print('{} - Thread SERVER_send_gps_coordinate is started!'.format(time.ctime()))
     # 2) Start send heading direction service.
-    threading.Thread(target=SERVER_send_heading_direction, args=(local_host,)).start()
+    threading.Thread(target=SERVER_send_heading_direction, args=(vehicle, local_host,)).start()
     print('{} - Thread SERVER_send_heading_direction is started!'.format(time.ctime()))
     # 3) Start send follower status command.
     #    Be sure you have decleared a global variable status_waitForCommand.
@@ -86,7 +86,7 @@ def start_SERVER_service(is_leader, local_host):
 # TO START IT:
 # threading.Thread(target=SERVER_send_gps_coordinate, args=(local_host,)).start().start()
 # print(' Thread thread_send_gps has started!')
-def SERVER_send_gps_coordinate(local_host):
+def SERVER_send_gps_coordinate(vehicle, local_host):
     global port_gps
     # Create a socket object
     msg_socket = socket.socket()
@@ -121,7 +121,7 @@ def SERVER_send_gps_coordinate(local_host):
 # TO START IT:
 # threading.Thread(target=SERVER_send_heading_direction, args=(local_host,)).start()
 # print(' Thread SERVER_send_heading_direction() has started!')
-def SERVER_send_heading_direction(local_host):
+def SERVER_send_heading_direction(vehicle, local_host):
     global port_heading
     # Create a socket object
     msg_socket = socket.socket()
@@ -175,7 +175,7 @@ def SERVER_receive_and_execute_immediate_command(local_host):
             print('{} - Immediate command \'{}\' is finished!'.format(time.ctime(), immediate_command_str))
         # If command is not 'Break', and status_waitForCommand is true, execute command immediately.
         else: # immediate_command_str is not 'air_break()'
-            if status_waitForCommand == True:
+            if status_waitForCommand:
                 # Change status_waitForCommand to False to block other calls.
                 status_waitForCommand = False
                 # Execute immediate command.
@@ -311,7 +311,7 @@ def wait_for_follower_ready(follower_host_tuple):
 # Velocity is relative to the vehicle's home position.
 # Velocity directions are in the North, East, Down (NED) frame.
 # The message is re-sent every second for the specified duration.
-def send_local_ned_velocity(velocity_x, velocity_y, velocity_z, duration):
+def send_local_ned_velocity(vehicle, velocity_x, velocity_y, velocity_z, duration):
     """
     Move vehicle in direction based on specified velocity vectors.
     """
@@ -342,7 +342,7 @@ def send_local_ned_velocity(velocity_x, velocity_y, velocity_z, duration):
 # Velocity is relative to the current vehicle heading.
 # Use this to specify the speed forward, right and down (or the opposite if you use negative values).
 # The message is re-sent every second for the specified duration.
-def send_body_frame_velocity(velocity_x, velocity_y, velocity_z, duration):
+def send_body_frame_velocity(vehicle, velocity_x, velocity_y, velocity_z, duration):
     """
     Move vehicle in direction based on specified velocity vectors.
     """
@@ -373,7 +373,7 @@ def send_body_frame_velocity(velocity_x, velocity_y, velocity_z, duration):
 # Position is relative to the vehicle's home position (launch location).
 # Position directions are in the North, East, Down (NED) frame.
 # The function will wait for an estimated time to finish the moving.
-def move_inLocalFrame(north, east, down, groundspeed):
+def move_inLocalFrame(vehicle, north, east, down, groundspeed):
     print('\n')
     print('{} - Calling function move_inLocalFrame(North={}, East={}, Down={}, groundspeed={})'.format(time.ctime(), north, east, down, groundspeed))
     # Time estimation.
@@ -422,7 +422,7 @@ def move_inLocalFrame(north, east, down, groundspeed):
 # Position forward, right and down are "positive" values.
 # IMPORTANT: Drone will turn its head toward to travel direction.
 # The function will wait for an estimated time to finish the moving.
-def move_inBodyFrame(forward, right, down, groundspeed):
+def move_inBodyFrame(vehicle, forward, right, down, groundspeed):
     print('\n')
     print('{} - Calling function move_inBodyFrame(forward={}, right={}, down={}, groundspeed={})'.format(time.ctime(), forward, right, down, groundspeed))
     # Time estimation.
@@ -470,7 +470,7 @@ def move_inBodyFrame(forward, right, down, groundspeed):
 # lat: Latitude.
 # lon: Longitude.
 # alt: Altitude in meters(relative to the home location).
-def goto_gps_location_relative(lat, lon, alt, groundspeed=None):
+def goto_gps_location_relative(vehicle,  lat, lon, alt, groundspeed=None):
     print('\n')
     print('{} - Calling goto_gps_location_relative(lat={}, lon={}, alt={}, groundspeed={}).'.format(time.ctime(), lat, lon, alt, groundspeed))
     destination = LocationGlobalRelative(lat, lon, alt)
@@ -502,7 +502,7 @@ def goto_gps_location_relative(lat, lon, alt, groundspeed=None):
 # lat: Latitude.
 # lon: Longitude.
 # alt: Altitude in meters(relative to the home location).
-def goto_gps_location_relative(lat, lon, alt, groundspeed=None):
+def goto_gps_location_relative(vehicle, lat, lon, alt, groundspeed=None):  # noqa: F811
     print('\n')
     print('{} - Calling goto_gps_location_relative(lat={}, lon={}, alt={}, groundspeed={}).'.format(time.ctime(), lat, lon, alt, groundspeed))
     destination = LocationGlobalRelative(lat, lon, alt)
@@ -536,7 +536,7 @@ def goto_gps_location_relative(lat, lon, alt, groundspeed=None):
 # The yaw will return to the default (facing direction of travel) after you set the mode or change the command used for controlling movement.
 # At time of writing there is no safe way to return to the default yaw "face direction of travel" behaviour.
 # After taking off, yaw commands are ignored until the first "movement" command has been received. If you need to yaw immediately following takeoff then send a command to "move" to your current position
-def set_yaw(yaw_inDegree, bool_isRelative):
+def set_yaw(vehicle, yaw_inDegree, bool_isRelative):
     print('\n')
     print('{} - Calling function set_yaw(yaw_inDegree={}, bool_isRelative={}).'.format(time.ctime(), yaw_inDegree, bool_isRelative))
     # Do not pass True of False into msg, just in case the conversion is unpredictable.
@@ -624,7 +624,7 @@ def distance_between_two_gps_coord(point1, point2):
 
 #===================================================
 
-def preArm_override():
+def preArm_override(vehicle):
     # vehicle.channels['1'] : Roll
     # vehicle.channels['2'] : Pitch
     # vehicle.channels['3'] : Throttle
@@ -639,7 +639,7 @@ def preArm_override():
 
 #===================================================
 
-def arm_no_RC():
+def arm_no_RC(vehicle):
     # Override RC channel 3, which is the throttle channel.
     preArm_override()
     
@@ -671,7 +671,7 @@ def arm_no_RC():
 
 #===================================================
 
-def air_break():
+def air_break(vehicle):
     if vehicle.armed:
         print('\n')
         print('{} - Calling function air_break().'.format(time.ctime()))
@@ -750,7 +750,7 @@ def fly_follow_leader_onCommand(args_tuple_str):
 #===================================================
 
 # This message has to be sent again and again.
-def fly_follow(followee_host, frame, height, radius_2D, azimuth):
+def fly_follow(vehicle, followee_host, frame, height, radius_2D, azimuth):
     global status_waitForCommand
     print('{} - Calling function fly_follow().'.format(time.ctime()))
     print('     followee_host={}'.format(followee_host))
@@ -764,7 +764,7 @@ def fly_follow(followee_host, frame, height, radius_2D, azimuth):
         lat, lon, alt = CLIENT_request_gps(followee_host)
         followee_heading = CLIENT_request_heading_direction(followee_host)
         # Calculate destination coordinate based on followee's location.
-        if (lat != None) and (followee_heading != None):
+        if (lat is not None) and (followee_heading is not None):
             print('{} - Followee drone\'s gps coordinate is : lat={}, lon={}, alt={}'.format(time.ctime(), lat, lon, alt))
             if (frame == 'body'):
                 # Calculate follower's new location. This location is based on followee's body frame. (0=North, 90=East)
@@ -788,7 +788,7 @@ def fly_follow(followee_host, frame, height, radius_2D, azimuth):
 
 #===================================================
 
-def takeoff_and_hover(hover_target_altitude):
+def takeoff_and_hover(vehicle, hover_target_altitude):
     print('\n')
     print('{} - Executing takeoff_and_hover().'.format(time.ctime()))
     vehicle.simple_takeoff(hover_target_altitude) # Take off to target altitude
@@ -805,7 +805,7 @@ def takeoff_and_hover(hover_target_altitude):
 
 #===================================================
 
-def return_to_launch():
+def return_to_launch(vehicle):
     # If vehicle mode is RTL, it will return to the launch location automatically.
     print('\n')
     print('{} - Returning home...'.format(time.ctime()))
