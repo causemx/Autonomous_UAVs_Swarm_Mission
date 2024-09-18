@@ -3,6 +3,7 @@
 
 import threading
 import time
+import yaml
 import builtins
 from datetime import datetime
 import netifaces as ni
@@ -26,9 +27,13 @@ from formation_function import (
 )
 
 
+# Read config.yaml
+with open('swarm_config.yaml', 'r') as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
+
 
 # Get local host IP.
-local_host = ni.ifaddresses("wlan0")[2][0]["addr"]
+local_host = ni.ifaddresses(config['WLAN_INTERFACE'])[2][0]['addr']
 host_specifier = local_host[-1]
 
 # Set log.
@@ -85,7 +90,7 @@ builtins.vehicle.parameters["BRD_SAFETYENABLE"] = 1  # Enable
 start_SERVER_service(vehicle_temp, is_leader, local_host)
 
 # Start connection checker. Drone will return home once lost connection.
-router_host = "192.168.2.1"
+router_host = config['ROUTER_HOST']
 threading.Thread(
     target=CHECK_network_connection, args=(vehicle_temp, router_host,), kwargs={"wait_time": 10}
 ).start()
@@ -94,9 +99,9 @@ threading.Thread(
 arm_no_RC(vehicle_temp)
 
 # IP list:
-iris1_host = "192.168.2.101"
-iris2_host = "192.168.2.102"
-iris3_host = "192.168.2.103"
+iris1_host = config['host1']
+iris2_host = config['host2']
+iris3_host = config['host3']
 
 follower1 = iris2_host
 follower2 = iris3_host
@@ -133,7 +138,7 @@ follower1_frame_to_followee = "'" + "body" + "'"  # 'body' or 'local'.
 follower2_followee = follower1_followee
 follower2_frame_to_followee = follower1_frame_to_followee
 
-
+"""
 # ===================== Formation 1 (squre) =====================
 # When taking off, drones are already in this formation.
 # Follower 1.
@@ -528,3 +533,4 @@ time.sleep(2)
 print("{} - Followers have returned home, Leader is returning...".format(time.ctime()))
 return_to_launch(vehicle_temp)
 print("{} - Leader has returned home.".format(time.ctime()))
+"""

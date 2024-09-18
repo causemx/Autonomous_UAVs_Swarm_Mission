@@ -1,6 +1,7 @@
 # This is the main function for follower drone.
 import builtins
 import time
+import yaml
 from datetime import datetime
 import netifaces as ni
 from dronekit import connect
@@ -11,9 +12,12 @@ import sys
 sys.path.append(os.getcwd())
 from formation_function import start_SERVER_service, CHECK_network_connection, arm_no_RC
 
+# Read config.yaml
+with open('config.yaml', 'r') as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
 
 # Get local host IP.
-local_host = ni.ifaddresses("wlan0")[2][0]["addr"]
+local_host = ni.ifaddresses(config['WLAN_INTERFACE'])[2][0]['addr']
 host_specifier = local_host[-1]
 
 # Set log.
@@ -52,7 +56,7 @@ builtins.port_heading = 60004
 
 # Connect to the Vehicle
 print("{} - Connecting to vehicle...".format(time.ctime()))
-vehicle_temp = connect("/dev/ttyUSB0", baud=57600, wait_ready=True)
+vehicle_temp = connect("/dev/ttyAMA0", baud=57600, wait_ready=True)
 while "vehicle_temp" not in locals():
     print("{} - Waiting for vehicle connection...".format(time.ctime()))
     time.sleep(1)
@@ -66,7 +70,7 @@ builtins.vehicle.parameters["BRD_SAFETYENABLE"] = 1  # Enable
 start_SERVER_service(vehicle_temp, is_leader, local_host)
 
 # Start connection checker. Drone will return home once lost connection.
-router_host = "192.168.2.1"
+router_host = config['ROUTER_HOST']
 threading.Thread(
     target=CHECK_network_connection, args=(vehicle_temp, router_host,), kwargs={"wait_time": 10}
 ).start()
