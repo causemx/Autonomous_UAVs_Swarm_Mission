@@ -8,7 +8,11 @@ from dronekit import VehicleMode
 from dronekit import LocationGlobalRelative
 from dronekit import mavutil
 import geopy
-from geopy.distance import vincenty
+try:
+    from geopy.distance import vincenty
+except ImportError:
+    from geopy.distance import geodesic
+    
 import socket
 import threading
 import multiprocessing  # noqa: F401
@@ -604,7 +608,7 @@ def new_gps_coord_after_offset_inBodyFrame(original_gps_coord, displacement, cur
     rotation_degree_absolute = rotation_degree_relative + current_heading
     if rotation_degree_absolute >= 360:
         rotation_degree_absolute -= 360
-    vincentyDistance = geopy.distance.VincentyDistance(meters = displacement)
+    vincentyDistance = geopy.distance.distance(kilometers=displacement)
     original_point = geopy.Point(original_gps_coord[0], original_gps_coord[1])
     new_gps_coord = vincentyDistance.destination(point=original_point, bearing=rotation_degree_absolute)
     new_gps_lat = new_gps_coord.latitude
@@ -619,7 +623,7 @@ def new_gps_coord_after_offset_inBodyFrame(original_gps_coord, displacement, cur
 # Calculate the distance between two gps coordinate. Return distance in meters.
 # 2D.
 def distance_between_two_gps_coord(point1, point2):
-    distance = vincenty(point1, point2).meters
+    distance = geodesic(point1, point2).meters
     return distance
 
 #===================================================

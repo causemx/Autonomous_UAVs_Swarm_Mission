@@ -28,13 +28,14 @@ from formation_function import (
 
 
 # Read config.yaml
-with open('swarm_config.yaml', 'r') as f:
+with open('config.yaml', 'r') as f:
     config = yaml.load(f, Loader=yaml.FullLoader)
 
 
 # Get local host IP.
 local_host = ni.ifaddresses(config['WLAN_INTERFACE'])[2][0]['addr']
 host_specifier = local_host[-1]
+print(local_host)
 
 # Set log.
 flight_log_bufsize = 1  # 0 means unbuffered, 1 means line buffered.
@@ -45,10 +46,12 @@ flight_log_filename = (
     + "{:%Y%m%d_%H-%M-%S}".format(datetime.now())
     + ".txt"
 )
+"""
 flight_log_path = "/home/iris" + host_specifier + "/Log/"
 flight_log_path_filename = flight_log_path + flight_log_filename
 flight_log = open(flight_log_path_filename, "w", flight_log_bufsize)
 sys.stdout = flight_log
+"""
 
 # Specify whether a leader or a follower.
 is_leader = True
@@ -62,7 +65,8 @@ print("{} - local_host = {}.".format(time.ctime(), local_host))
 print("{} - This drone is iris{}".format(time.ctime(), host_specifier))
 
 # Get local host IP.
-local_host = ni.ifaddresses("wlan0")[2][0]["addr"]
+# local_host = ni.ifaddresses("wlan0")[2][0]["addr"]
+local_host = ni.ifaddresses(config['WLAN_INTERFACE'])[2][0]['addr']
 print("{} - local_host = {}.".format(time.ctime(), local_host))
 host_specifier = local_host[-1]
 print("{} - This drone is iris{}".format(time.ctime(), host_specifier))
