@@ -645,7 +645,7 @@ def preArm_override(vehicle):
 
 def arm_no_RC(vehicle):
     # Override RC channel 3, which is the throttle channel.
-    preArm_override()
+    preArm_override(vehicle)
     
     # Wait for 3 seconds after overriding the throttle channel. Make sure the value is sent to pixhawk.
     time.sleep(3)

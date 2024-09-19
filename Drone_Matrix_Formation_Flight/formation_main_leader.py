@@ -35,7 +35,6 @@ with open('config.yaml', 'r') as f:
 # Get local host IP.
 local_host = ni.ifaddresses(config['WLAN_INTERFACE'])[2][0]['addr']
 host_specifier = local_host[-1]
-print(local_host)
 
 # Set log.
 flight_log_bufsize = 1  # 0 means unbuffered, 1 means line buffered.
@@ -60,9 +59,6 @@ if is_leader:
     leader_host = local_host
 else:
     print("{} - This is a follower drone.".format(time.ctime()))
-
-print("{} - local_host = {}.".format(time.ctime(), local_host))
-print("{} - This drone is iris{}".format(time.ctime(), host_specifier))
 
 # Get local host IP.
 # local_host = ni.ifaddresses("wlan0")[2][0]["addr"]
