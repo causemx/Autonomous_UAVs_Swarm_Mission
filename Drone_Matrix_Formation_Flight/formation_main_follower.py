@@ -21,6 +21,7 @@ local_host = ni.ifaddresses(config['WLAN_INTERFACE'])[2][0]['addr']
 host_specifier = local_host[-1]
 
 # Set log.
+"""
 flight_log_bufsize = 1  # 0 means unbuffered, 1 means line buffered.
 flight_log_filename = (
     "FlightLog_iris"
@@ -33,6 +34,7 @@ flight_log_path = "/home/iris" + host_specifier + "/Log/"
 flight_log_path_filename = flight_log_path + flight_log_filename
 flight_log = open(flight_log_path_filename, "w", flight_log_bufsize)
 sys.stdout = flight_log
+"""
 
 # Specify whether a leader or a follower.
 is_leader = False

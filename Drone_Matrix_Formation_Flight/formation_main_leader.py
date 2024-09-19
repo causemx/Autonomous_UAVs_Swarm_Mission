@@ -80,7 +80,7 @@ builtins.port_heading = 60004
 
 # Connect to the Vehicle
 print("{} - Connecting to vehicle...".format(time.ctime()))
-vehicle_temp = connect("/dev/ttyUSB0", baud=57600, wait_ready=True)
+vehicle_temp = connect("/dev/ttyAMA0", baud=57600, wait_ready=True)
 while "vehicle_temp" not in locals():
     print("{} - Waiting for vehicle connection...".format(time.ctime()))
     time.sleep(1)
