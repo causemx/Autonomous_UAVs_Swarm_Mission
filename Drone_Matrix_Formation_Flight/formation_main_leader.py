@@ -45,12 +45,12 @@ flight_log_filename = (
     + "{:%Y%m%d_%H-%M-%S}".format(datetime.now())
     + ".txt"
 )
-"""
-flight_log_path = "/home/iris" + host_specifier + "/Log/"
+
+flight_log_path = "/home/pi/log/"
 flight_log_path_filename = flight_log_path + flight_log_filename
 flight_log = open(flight_log_path_filename, "w", flight_log_bufsize)
 sys.stdout = flight_log
-"""
+
 
 # Specify whether a leader or a follower.
 is_leader = True
