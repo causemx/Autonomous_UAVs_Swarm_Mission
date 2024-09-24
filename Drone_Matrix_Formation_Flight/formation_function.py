@@ -8,15 +8,12 @@ from dronekit import VehicleMode
 from dronekit import LocationGlobalRelative
 from dronekit import mavutil
 import geopy
-try:
-    from geopy.distance import vincenty
-except ImportError:
-    from geopy.distance import geodesic
-    
+from geopy.distance import geodesic    
 import socket
 import threading
 import multiprocessing  # noqa: F401
 import os
+import builtins
 
 # MAVLink Parameters to specify coordinate frame.
 # 1) MAV_FRAME_LOCAL_NED:
@@ -90,7 +87,7 @@ def start_SERVER_service(vehicle, is_leader, local_host):
 # TO START IT:
 # threading.Thread(target=SERVER_send_gps_coordinate, args=(local_host,)).start().start()
 # print(' Thread thread_send_gps has started!')
-def SERVER_send_gps_coordinate(vehicle, local_host):
+def SERVER_send_gps_coordinate(local_host):
     global port_gps
     # Create a socket object
     msg_socket = socket.socket()
@@ -106,7 +103,7 @@ def SERVER_send_gps_coordinate(vehicle, local_host):
         # Send message to client.
         # Get current GPS coordinate, compare with destination GPS coordinate.
         
-        current_gps_coordinate = vehicle.location.global_relative_frame
+        current_gps_coordinate = builtins.vehicle.location.global_relative_frame
         current_lat = current_gps_coordinate.lat
         current_lon = current_gps_coordinate.lon
         current_alt = current_gps_coordinate.alt
@@ -115,7 +112,7 @@ def SERVER_send_gps_coordinate(vehicle, local_host):
         current_lon_str = '{:.7f}'.format(current_lon)
         current_alt_str = '{:.7f}'.format(current_alt)
         gps_msg_str = current_lat_str + ',' + current_lon_str + ',' + current_alt_str
-        client_connection.send(gps_msg_str)
+        client_connection.send(gps_msg_str.encode('utf-8'))
         # Socket is destroyed when message has been sent.
         client_connection.close()
 
@@ -125,7 +122,7 @@ def SERVER_send_gps_coordinate(vehicle, local_host):
 # TO START IT:
 # threading.Thread(target=SERVER_send_heading_direction, args=(local_host,)).start()
 # print(' Thread SERVER_send_heading_direction() has started!')
-def SERVER_send_heading_direction(vehicle, local_host):
+def SERVER_send_heading_direction(local_host):
     global port_heading
     # Create a socket object
     msg_socket = socket.socket()
@@ -140,9 +137,9 @@ def SERVER_send_heading_direction(vehicle, local_host):
         print('{} - Received heading direction request from {}.'.format(time.ctime(), client_address))
         # Send message to client.
         # Get current heading.
-        heading = vehicle.heading
+        heading = builtins.vehicle.heading
         current_heading_str = str(heading)
-        client_connection.send(current_heading_str)
+        client_connection.send(current_heading_str.encode('utf-8'))
         # Socket is destroyed when message has been sent.
         client_connection.close()
 
@@ -168,7 +165,8 @@ def SERVER_receive_and_execute_immediate_command(local_host):
         client_connection, client_address = msg_socket.accept() # Establish connection with client.
         print('\n{} - Received immediate command from {}.'.format(time.ctime(), client_address))
         # Receive message.
-        immediate_command_str = client_connection.recv(1024)
+        immediate_command_bytes = client_connection.recv(1024)
+        immediate_command_str = immediate_command_bytes.decode('utf-8').strip()
         print('{} - Immediate command is: {}'.format(time.ctime(), immediate_command_str))
         # If command is 'break', execute immediately, regardless of the status of follower drone.
         if immediate_command_str == 'air_break()':
@@ -215,7 +213,7 @@ def SERVER_send_status(local_host):
         print('{} - Received follower status request from {}.'.format(time.ctime(), client_address))
         # Send message to client.
         str_status_waitForCommand = str(int(status_waitForCommand))
-        client_connection.send(str_status_waitForCommand)
+        client_connection.send(str_status_waitForCommand.encode('utf-8'))
         # Socket is destroyed when message has been sent.
         client_connection.close()
 
@@ -233,7 +231,7 @@ def CLIENT_send_immediate_command(remote_host, immediate_command_str):
         print('{} - Caught exception : {}'.format(time.ctime(), error_msg))
         print('{} - CLIENT_send_immediate_command({}, {}) is not executed!'.format(time.ctime(), remote_host, immediate_command_str))
         return
-    client_socket.send(immediate_command_str)
+    client_socket.send(immediate_command_str.encode('utf-8'))
 
 #=============================================================
 
@@ -249,7 +247,8 @@ def CLIENT_request_status(remote_host):
         print('{} - Caught exception : {}'.format(time.ctime(), error_msg))
         print('{} - CLIENT_request_status({}) is not executed!'.format(time.ctime(), remote_host))
         return False
-    status_msg_str = client_socket.recv(1024)
+    status_msg_bytes = client_socket.recv(1024)
+    status_msg_str = status_msg_bytes.decode('utf-8').strip()
     return bool(int(status_msg_str))
 
 #=============================================================
@@ -266,7 +265,8 @@ def CLIENT_request_gps(remote_host):
         print('{} - Caught exception : {}'.format(time.ctime(), error_msg))
         print('{} - CLIENT_request_gps({}) is not executed!'.format(time.ctime(), remote_host))
         return None, None, None
-    gps_msg_str = client_socket.recv(1024)
+    gps_msg_bytes = client_socket.recv(1024)
+    gps_msg_str = gps_msg_bytes.decode('utf-8').strip()
     # Return lat, lon, and alt
     lat, lon, alt = gps_msg_str.split(',')
     return float(lat), float(lon), float(alt)
@@ -285,7 +285,8 @@ def CLIENT_request_heading_direction(remote_host):
         print('{} - Caught exception : {}'.format(time.ctime(), error_msg))
         print('{} - CLIENT_request_heading_direction({}) is not executed!'.format(time.ctime(), remote_host))
         return None
-    heading_msg_str = client_socket.recv(1024)
+    heading_msg_bytes = client_socket.recv(1024)
+    heading_msg_str = heading_msg_bytes.decode('utf-8').strip()
     return int(heading_msg_str)
 
 #=============================================================
@@ -315,13 +316,13 @@ def wait_for_follower_ready(follower_host_tuple):
 # Velocity is relative to the vehicle's home position.
 # Velocity directions are in the North, East, Down (NED) frame.
 # The message is re-sent every second for the specified duration.
-def send_local_ned_velocity(vehicle, velocity_x, velocity_y, velocity_z, duration):
+def send_local_ned_velocity(velocity_x, velocity_y, velocity_z, duration):
     """
     Move vehicle in direction based on specified velocity vectors.
     """
     print('\n')
     print('{} - Calling function send_local_ned_velocity(Vx={}, Vy={}, Vz={}, Duration={})'.format(time.ctime(), velocity_x, velocity_y, velocity_z, duration))
-    msg = vehicle.message_factory.set_position_target_local_ned_encode(
+    msg = builtins.vehicle.message_factory.set_position_target_local_ned_encode(
         0,       # time_boot_ms (not used)
         0, 0,    # target system, target component
         mavutil.mavlink.MAV_FRAME_LOCAL_NED, # frame
@@ -333,11 +334,11 @@ def send_local_ned_velocity(vehicle, velocity_x, velocity_y, velocity_z, duratio
 
     # send command to vehicle on 1 Hz cycle
     for x in range(0, int(math.ceil(duration))):
-        vehicle.send_mavlink(msg)
+        builtins.ehicle.send_mavlink(msg)
         print('{} - Local NED Velocity command is sent! Vx={}, Vy={}, Vz={}'.format(time.ctime(), velocity_x, velocity_y, velocity_z))
         print('{} - Duration = {} seconds'.format(time.ctime(), x+1))
         time.sleep(1)
-        get_vehicle_state(vehicle)
+        get_vehicle_state(builtins.vehicle)
         print('\n')
 
 #===================================================
@@ -346,13 +347,13 @@ def send_local_ned_velocity(vehicle, velocity_x, velocity_y, velocity_z, duratio
 # Velocity is relative to the current vehicle heading.
 # Use this to specify the speed forward, right and down (or the opposite if you use negative values).
 # The message is re-sent every second for the specified duration.
-def send_body_frame_velocity(vehicle, velocity_x, velocity_y, velocity_z, duration):
+def send_body_frame_velocity(velocity_x, velocity_y, velocity_z, duration):
     """
     Move vehicle in direction based on specified velocity vectors.
     """
     print('\n')
     print('{} - Calling function send_body_frame_velocity(Vx={}, Vy={}, Vz={}, Duration={})'.format(time.ctime(), velocity_x, velocity_y, velocity_z, duration))
-    msg = vehicle.message_factory.set_position_target_local_ned_encode(
+    msg = builtins.vehicle.message_factory.set_position_target_local_ned_encode(
         0,       # time_boot_ms (not used)
         0, 0,    # target system, target component
         mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
@@ -364,11 +365,11 @@ def send_body_frame_velocity(vehicle, velocity_x, velocity_y, velocity_z, durati
 
     # send command to vehicle on 1 Hz cycle
     for x in range(0, int(math.ceil(duration))):
-        vehicle.send_mavlink(msg)
+        builtins.vehicle.send_mavlink(msg)
         print('{} - Body Frame Velocity command is sent! Vx={}, Vy={}, Vz={}'.format(time.ctime(), velocity_x, velocity_y, velocity_z))
         print('{} - Duration = {} seconds'.format(time.ctime(), x+1))
         time.sleep(1)
-        get_vehicle_state(vehicle)
+        get_vehicle_state(builtins.vehicle)
         print('\n')
 
 #===================================================
@@ -377,7 +378,7 @@ def send_body_frame_velocity(vehicle, velocity_x, velocity_y, velocity_z, durati
 # Position is relative to the vehicle's home position (launch location).
 # Position directions are in the North, East, Down (NED) frame.
 # The function will wait for an estimated time to finish the moving.
-def move_inLocalFrame(vehicle, north, east, down, groundspeed):
+def move_inLocalFrame(north, east, down, groundspeed):
     print('\n')
     print('{} - Calling function move_inLocalFrame(North={}, East={}, Down={}, groundspeed={})'.format(time.ctime(), north, east, down, groundspeed))
     # Time estimation.
@@ -395,7 +396,7 @@ def move_inLocalFrame(vehicle, north, east, down, groundspeed):
         print('{} - 3-Dimension fight, estimatied flight time is : {}'.format(time.ctime(), estimatedTime))
 
     # Generate MAVLink message.
-    msg = vehicle.message_factory.set_position_target_local_ned_encode(
+    msg = builtins.vehicle.message_factory.set_position_target_local_ned_encode(
         0,       # time_boot_ms (not used)
         0, 0,    # target system, target component
         mavutil.mavlink.MAV_FRAME_LOCAL_NED, # frame
@@ -406,17 +407,17 @@ def move_inLocalFrame(vehicle, north, east, down, groundspeed):
         0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
 
     # Set ground speed.
-    vehicle.groundspeed = groundspeed
-    print('{} - Groundspeed is set to {} m/s.'.format(time.ctime(), vehicle.groundspeed))
+    builtins.vehicle.groundspeed = groundspeed
+    print('{} - Groundspeed is set to {} m/s.'.format(time.ctime(), builtins.vehicle.groundspeed))
 
     # Send MAVLink message.
-    vehicle.send_mavlink(msg)
+    builtins.vehicle.send_mavlink(msg)
 
     # Wait estimated time for command to be fully executed.
     for t in range(0, int(math.ceil(estimatedTime))):
         time.sleep(1)
         print('{} - Executed move_inLocalFrame(North={}, East={}, Down={}, groundspeed={}) for {} seconds.'.format(time.ctime(), north, east, down, groundspeed, t+1))
-        get_vehicle_state(vehicle)
+        get_vehicle_state(builtins.vehicle)
         print('\n')
 
 #===================================================
@@ -426,7 +427,7 @@ def move_inLocalFrame(vehicle, north, east, down, groundspeed):
 # Position forward, right and down are "positive" values.
 # IMPORTANT: Drone will turn its head toward to travel direction.
 # The function will wait for an estimated time to finish the moving.
-def move_inBodyFrame(vehicle, forward, right, down, groundspeed):
+def move_inBodyFrame(forward, right, down, groundspeed):
     print('\n')
     print('{} - Calling function move_inBodyFrame(forward={}, right={}, down={}, groundspeed={})'.format(time.ctime(), forward, right, down, groundspeed))
     # Time estimation.
@@ -444,7 +445,7 @@ def move_inBodyFrame(vehicle, forward, right, down, groundspeed):
         print('{} - 3-Dimension fight, estimatied flight time is : {}'.format(time.ctime(), estimatedTime))
     
     # Generate MAVLink message.
-    msg = vehicle.message_factory.set_position_target_local_ned_encode(
+    msg = builtins.vehicle.message_factory.set_position_target_local_ned_encode(
         0,       # time_boot_ms (not used)
         0, 0,    # target system, target component
         mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
@@ -455,17 +456,17 @@ def move_inBodyFrame(vehicle, forward, right, down, groundspeed):
         0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink)
 
     # Set ground speed.
-    vehicle.groundspeed = groundspeed
-    print('{} - Groundspeed is set to {} m/s.'.format(time.ctime(), vehicle.groundspeed))
+    builtins.vehicle.groundspeed = groundspeed
+    print('{} - Groundspeed is set to {} m/s.'.format(time.ctime(), builtins.vehicle.groundspeed))
 
     # Send MAVLink message.
-    vehicle.send_mavlink(msg)
+    builtins.vehicle.send_mavlink(msg)
 
     # Wait estimated time for command to be fully executed.
     for t in range(0, int(math.ceil(estimatedTime))):
         time.sleep(1)
         print('{} - Executed move_inBodyFrame(forward={}, right={}, down={}, groundspeed={}) for {} seconds.'.format(time.ctime(), forward, right, down, groundspeed, t+1))
-        get_vehicle_state(vehicle)
+        get_vehicle_state(builtins.vehicle)
         print('\n')
 
 #===================================================
@@ -474,31 +475,31 @@ def move_inBodyFrame(vehicle, forward, right, down, groundspeed):
 # lat: Latitude.
 # lon: Longitude.
 # alt: Altitude in meters(relative to the home location).
-def goto_gps_location_relative(vehicle,  lat, lon, alt, groundspeed=None):
+def goto_gps_location_relative(lat, lon, alt, groundspeed=None):
     print('\n')
     print('{} - Calling goto_gps_location_relative(lat={}, lon={}, alt={}, groundspeed={}).'.format(time.ctime(), lat, lon, alt, groundspeed))
     destination = LocationGlobalRelative(lat, lon, alt)
     print('{} - Before calling goto_gps_location_relative(), vehicle state is:'.format(time.ctime()))
-    get_vehicle_state(vehicle)
+    get_vehicle_state(builtins.vehicle)
     # Get current GPS coordinate, compare with destination GPS coordinate.
-    current_lat = vehicle.location.global_relative_frame.lat
-    current_lon = vehicle.location.global_relative_frame.lon
-    current_alt = vehicle.location.global_relative_frame.alt
+    current_lat = builtins.vehicle.location.global_relative_frame.lat
+    current_lon = builtins.vehicle.location.global_relative_frame.lon
+    current_alt = builtins.vehicle.location.global_relative_frame.alt
     # Wait until reach destination.
     while ((distance_between_two_gps_coord((current_lat,current_lon), (lat,lon)) >0.5) or (abs(current_alt-alt)>0.3)):
         # Execute fly command.
-        vehicle.simple_goto(destination, groundspeed=groundspeed)
+        builtins.vehicle.simple_goto(destination, groundspeed=groundspeed)
         # wait for one second.
         time.sleep(0.5)
         # Check current GPS coordinate, compare with destination GPS coordinate.
-        current_lat = vehicle.location.global_relative_frame.lat
-        current_lon = vehicle.location.global_relative_frame.lon
-        current_alt = vehicle.location.global_relative_frame.alt
+        current_lat = builtins.vehicle.location.global_relative_frame.lat
+        current_lon = builtins.vehicle.location.global_relative_frame.lon
+        current_alt = builtins.vehicle.location.global_relative_frame.alt
         print('{} - Horizontal distance to destination: {} m.'.format(time.ctime(), distance_between_two_gps_coord((current_lat,current_lon), (lat,lon))))
         print('{} - Perpendicular distance to destination: {} m.'.format(time.ctime(), current_alt-alt))
     # When finishe, check vehicle status.
     print('{} - After calling goto_gps_location_relative(), vehicle state is:'.format(time.ctime()))
-    get_vehicle_state(vehicle)
+    get_vehicle_state(builtins.vehicle)
 
 #===================================================
 
@@ -506,32 +507,32 @@ def goto_gps_location_relative(vehicle,  lat, lon, alt, groundspeed=None):
 # lat: Latitude.
 # lon: Longitude.
 # alt: Altitude in meters(relative to the home location).
-def goto_gps_location_relative(vehicle, lat, lon, alt, groundspeed=None):  # noqa: F811
+def goto_gps_location_relative(lat, lon, alt, groundspeed=None):  # noqa: F811
     print('\n')
     print('{} - Calling goto_gps_location_relative(lat={}, lon={}, alt={}, groundspeed={}).'.format(time.ctime(), lat, lon, alt, groundspeed))
     destination = LocationGlobalRelative(lat, lon, alt)
     print('{} - Before calling goto_gps_location_relative(), vehicle state is:'.format(time.ctime()))
-    get_vehicle_state(vehicle)
+    get_vehicle_state(builtins.vehicle)
     # Get current GPS coordinate, compare with destination GPS coordinate.
-    current_lat = vehicle.location.global_relative_frame.lat
-    current_lon = vehicle.location.global_relative_frame.lon
-    current_alt = vehicle.location.global_relative_frame.alt
+    current_lat = builtins.vehicle.location.global_relative_frame.lat
+    current_lon = builtins.vehicle.location.global_relative_frame.lon
+    current_alt = builtins.vehicle.location.global_relative_frame.alt
     
     while ((distance_between_two_gps_coord((current_lat,current_lon), (lat,lon)) >0.5) or (abs(current_alt-alt)>0.3)):
         # Execute fly command.
-        vehicle.simple_goto(destination, groundspeed=groundspeed)
+        builtins.vehicle.simple_goto(destination, groundspeed=groundspeed)
         # wait for one second.
         time.sleep(0.5)
         # Check current GPS coordinate, compare with destination GPS coordinate.
-        current_lat = vehicle.location.global_relative_frame.lat
-        current_lon = vehicle.location.global_relative_frame.lon
-        current_alt = vehicle.location.global_relative_frame.alt
+        current_lat = builtins.vehicle.location.global_relative_frame.lat
+        current_lon = builtins.vehicle.location.global_relative_frame.lon
+        current_alt = builtins.vehicle.location.global_relative_frame.alt
         print('{} - Horizontal distance to destination: {} m.'.format(time.ctime(), distance_between_two_gps_coord((current_lat,current_lon), (lat,lon))))
         print('{} - Perpendicular distance to destination: {} m.'.format(time.ctime(), current_alt-alt))
     
     
     print('{} - After calling goto_gps_location_relative(), vehicle state is:'.format(time.ctime()))
-    get_vehicle_state(vehicle)
+    get_vehicle_state(builtins.vehicle)
 
 #===================================================
 
@@ -540,7 +541,7 @@ def goto_gps_location_relative(vehicle, lat, lon, alt, groundspeed=None):  # noq
 # The yaw will return to the default (facing direction of travel) after you set the mode or change the command used for controlling movement.
 # At time of writing there is no safe way to return to the default yaw "face direction of travel" behaviour.
 # After taking off, yaw commands are ignored until the first "movement" command has been received. If you need to yaw immediately following takeoff then send a command to "move" to your current position
-def set_yaw(vehicle, yaw_inDegree, bool_isRelative):
+def set_yaw(yaw_inDegree, bool_isRelative):
     print('\n')
     print('{} - Calling function set_yaw(yaw_inDegree={}, bool_isRelative={}).'.format(time.ctime(), yaw_inDegree, bool_isRelative))
     # Do not pass True of False into msg, just in case the conversion is unpredictable.
@@ -555,17 +556,17 @@ def set_yaw(vehicle, yaw_inDegree, bool_isRelative):
     else:
         is_relative = 0
         print('{} - The target degree is absolute degree[0~360](0=North, 90=East).'.format(time.ctime()))
-        currentHeading = vehicle.heading
+        currentHeading = builtins.vehicle.heading
         print('{} - Current heading is {} degree.'.format(time.ctime(), currentHeading))
         print('{} - Target heading is {} degree.'.format(time.ctime(), yaw_inDegree))
-        degreeToTurn = abs(yaw_inDegree - vehicle.heading)
+        degreeToTurn = abs(yaw_inDegree - builtins.vehicle.heading)
         if degreeToTurn > 180:
             degreeToTurn = 360 - degreeToTurn
         estimatedTime = degreeToTurn/30.0 + 1 # Upon testing, the turning speed is 30 degree/second. Add one more second.
         print('{} - Absolute degree to turn is {} degree. Estimated time is {} seconds.'.format(time.ctime(), degreeToTurn, estimatedTime))
     
     # create the CONDITION_YAW command using command_long_encode()
-    msg = vehicle.message_factory.command_long_encode(
+    msg = builtins.vehicle.message_factory.command_long_encode(
         0, 0,    # target system, target component
         mavutil.mavlink.MAV_CMD_CONDITION_YAW, #command
         0, #confirmation
@@ -576,13 +577,13 @@ def set_yaw(vehicle, yaw_inDegree, bool_isRelative):
         0, 0, 0)    # param 5 ~ 7 not used
     
     # Send MAVLink message.
-    vehicle.send_mavlink(msg)
+    builtins.vehicle.send_mavlink(msg)
     
     # Wait sort of time for the command to be fully executed.
     for t in range(0, int(math.ceil(estimatedTime))):
         time.sleep(1)
         print('{} - Executed set_yaw(yaw_inDegree={}, bool_isRelative={}) for {} seconds.'.format(time.ctime(), yaw_inDegree, bool_isRelative, t+1))
-        get_vehicle_state(vehicle)
+        get_vehicle_state(builtins.vehicle)
         print('\n')
 
 #===================================================
@@ -628,7 +629,7 @@ def distance_between_two_gps_coord(point1, point2):
 
 #===================================================
 
-def preArm_override(vehicle):
+def preArm_override():
     # vehicle.channels['1'] : Roll
     # vehicle.channels['2'] : Pitch
     # vehicle.channels['3'] : Throttle
@@ -638,20 +639,20 @@ def preArm_override(vehicle):
     # value(vehicle.parameters.get('FS_THR_VALUE')).
     # To bypass throttle failsafe check, you need to override channel 3.
     # The range of FS_THR_VALUE is (925 ~ 1100), so we can set channel 3 to 1100.
-    vehicle.channels.overrides['3'] = 1100
+    builtins.vehicle.channels.overrides['3'] = 1100
     # Caution: Do not set channel 3 any higher value, or the vehicle will thrust when armed.
 
 #===================================================
 
-def arm_no_RC(vehicle):
+def arm_no_RC():
     # Override RC channel 3, which is the throttle channel.
-    preArm_override(vehicle)
+    preArm_override()
     
     # Wait for 3 seconds after overriding the throttle channel. Make sure the value is sent to pixhawk.
     time.sleep(3)
     
     # Wait till the vehicle is armable.
-    while not vehicle.is_armable:
+    while not builtins.vehicle.is_armable:
         print('{} - Vehicle is not armable, waiting for vehicle to initialise...'.format(time.ctime()))
         time.sleep(1)
     
@@ -659,28 +660,28 @@ def arm_no_RC(vehicle):
     print('{} - Arming motors...'.format(time.ctime()))
 
     # Copter should arm in GUIDED mode
-    vehicle.mode = VehicleMode('GUIDED')
+    builtins.vehicle.mode = VehicleMode('GUIDED')
     # Wait for 3 seconds after mode change. Make sure the value is sent.
     time.sleep(3)
     # Check if the vehicle mode is GUIDED.
-    print('{} - Vehicle mode is changed to {}'.format(time.ctime(), vehicle.mode.name))
+    print('{} - Vehicle mode is changed to {}'.format(time.ctime(), builtins.vehicle.mode.name))
 
     # Try to arm vehicle. The first time will be probably failed. It will initialize APM. After initializing, the second time will be a succeed.
-    vehicle.armed = True
+    builtins.vehicle.armed = True
     # If the first time arming failed, arm again till success.
-    while not vehicle.armed:
+    while not builtins.vehicle.armed:
         print('{} - Vehicle is not armed, try to arm vehicle again...'.format(time.ctime()))
         time.sleep(3)
-        vehicle.armed = True
+        builtins.vehicle.armed = True
 
 #===================================================
 
-def air_break(vehicle):
-    if vehicle.armed:
+def air_break():
+    if builtins.vehicle.armed:
         print('\n')
         print('{} - Calling function air_break().'.format(time.ctime()))
         
-        msg = vehicle.message_factory.set_position_target_local_ned_encode(
+        msg = builtins.vehicle.message_factory.set_position_target_local_ned_encode(
             0,       # time_boot_ms (not used)
             0, 0,    # target system, target component
             mavutil.mavlink.MAV_FRAME_BODY_OFFSET_NED, # frame
@@ -692,14 +693,14 @@ def air_break(vehicle):
 
         # Send message one time, then check the speed, if not stop, send again.
         print('{} - Sending air break command first time.'.format(time.ctime()))
-        vehicle.send_mavlink(msg)
-        get_vehicle_state(vehicle)
-        while ((vehicle.velocity[0]**2+vehicle.velocity[1]**2+vehicle.velocity[2]**2)>0.1):
+        builtins.vehicle.send_mavlink(msg)
+        get_vehicle_state(builtins.vehicle)
+        while ((builtins.vehicle.velocity[0]**2+builtins.vehicle.velocity[1]**2+builtins.vehicle.velocity[2]**2)>0.1):
             print('{} - Sending air break command once again.'.format(time.ctime()))
-            vehicle.send_mavlink(msg)
-            print('{} - Body Frame Velocity command is sent! Vx={}, Vy={}, Vz={}'.format(time.ctime(), vehicle.velocity[0], vehicle.velocity[1], vehicle.velocity[2]))
+            builtins.vehicle.send_mavlink(msg)
+            print('{} - Body Frame Velocity command is sent! Vx={}, Vy={}, Vz={}'.format(time.ctime(), builtins.vehicle.velocity[0], builtins.vehicle.velocity[1], builtins.vehicle.velocity[2]))
             time.sleep(1)
-            get_vehicle_state(vehicle)
+            get_vehicle_state(builtins.vehicle)
             print('\n')
     else:
         print('{} - Vehicle is not armed, no need to break.'.format(time.ctime()))
@@ -754,7 +755,7 @@ def fly_follow_leader_onCommand(args_tuple_str):
 #===================================================
 
 # This message has to be sent again and again.
-def fly_follow(vehicle, followee_host, frame, height, radius_2D, azimuth):
+def fly_follow(followee_host, frame, height, radius_2D, azimuth):
     global status_waitForCommand
     print('{} - Calling function fly_follow().'.format(time.ctime()))
     print('     followee_host={}'.format(followee_host))
@@ -762,7 +763,7 @@ def fly_follow(vehicle, followee_host, frame, height, radius_2D, azimuth):
     print('     height={}'.format(height))
     print('     radius_2D={}'.format(radius_2D))
     print('     azimuth={}'.format(azimuth))
-    if vehicle.armed:
+    if builtins.vehicle.armed:
         # Request followee drone's gps coordinate.
         print('{} - Requesting followee drone\'s gps coordinate...'.format(time.ctime()))
         lat, lon, alt = CLIENT_request_gps(followee_host)
@@ -782,9 +783,9 @@ def fly_follow(vehicle, followee_host, frame, height, radius_2D, azimuth):
                 print('{} - Frame error, should be \'body\' or \'local\'. fly_follow() is not executed!'.format(time.ctime()))
                 return
             # Execute fly command.
-            vehicle.simple_goto(destination)
+            builtins.vehicle.simple_goto(destination)
             print('{} - After executing fly_follow(), vehicle status is:'.format(time.ctime()))
-            get_vehicle_state(vehicle)
+            get_vehicle_state(builtins.vehicle)
         else:
             print('{} - Cannot get followee\'s GPS coordinate or heading direction, fly_follow() is not executed!'.format(time.ctime()))
     else:
@@ -792,51 +793,51 @@ def fly_follow(vehicle, followee_host, frame, height, radius_2D, azimuth):
 
 #===================================================
 
-def takeoff_and_hover(vehicle, hover_target_altitude):
+def takeoff_and_hover(hover_target_altitude):
     print('\n')
     print('{} - Executing takeoff_and_hover().'.format(time.ctime()))
-    vehicle.simple_takeoff(hover_target_altitude) # Take off to target altitude
+    builtins.vehicle.simple_takeoff(hover_target_altitude) # Take off to target altitude
     # Wait until the vehicle reaches a safe height before processing other command, otherwise the command after Vehicle.simple_takeoff will execute immediately.
     while True:
-        print('{} - Current Altitude: {} m'.format(time.ctime(), vehicle.location.global_relative_frame.alt))
-        get_vehicle_state(vehicle)        
+        print('{} - Current Altitude: {} m'.format(time.ctime(), builtins.vehicle.location.global_relative_frame.alt))
+        get_vehicle_state(builtins.vehicle)        
         print('\n')
         #Break and return from function just below target altitude.
-        if vehicle.location.global_relative_frame.alt>=hover_target_altitude*0.95:
+        if builtins.vehicle.location.global_relative_frame.alt>=hover_target_altitude*0.95:
             print('{} - Reached target altitude!\n'.format(time.ctime()))
             break
         time.sleep(1)
 
 #===================================================
 
-def return_to_launch(vehicle):
+def return_to_launch():
     # If vehicle mode is RTL, it will return to the launch location automatically.
     print('\n')
     print('{} - Returning home...'.format(time.ctime()))
     print('{} - Changing vehicle mode to RTL...'.format(time.ctime()))
-    vehicle.mode = VehicleMode('RTL')
+    builtins.vehicle.mode = VehicleMode('RTL')
     time.sleep(3) # Wait one second for mode change.
-    print('{} - Current vehicle mode is {}'.format(time.ctime(), vehicle.mode))
-    while vehicle.armed:
+    print('{} - Current vehicle mode is {}'.format(time.ctime(), builtins.vehicle.mode))
+    while builtins.vehicle.armed:
         print('{} - Vehicle is returning, wait for 1 second.'.format(time.ctime()))
         time.sleep(1)
     print('{} - Vehicle has returned home.'.format(time.ctime()))
 
 #===================================================
 
-def get_vehicle_state(vehicle):
+def get_vehicle_state():
     print('{} - Checking current Vehicle Status:'.format(time.ctime()))
-    print('     Global Location: lat={}, lon={}, alt(above sea leavel)={}'.format(vehicle.location.global_frame.lat, vehicle.location.global_frame.lon, vehicle.location.global_frame.alt)) # Absolute GPS coordinate. Its lat and lon attributes are populated shortly after GPS becomes available. The alt can take several seconds longer to populate (from the barometer).
-    print('     Global Location (relative altitude): lat={}, lon={}, alt(relative)={}'.format(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, vehicle.location.global_relative_frame.alt)) # GPS coordinate with relative altitude.
-    print('     Local Location(NED coordinate): north={}, east={}, down={}'.format(vehicle.location.local_frame.north, vehicle.location.local_frame.east, vehicle.location.local_frame.down)) # North east down (NED), also known as local tangent plane (LTP)
-    print('     Attitude(radians): Pitch={}, Yaw={}, Roll={}'.format(vehicle.attitude.pitch, vehicle.attitude.yaw, vehicle.attitude.roll)) # Pitch, Yaw, and Roll.
-    print('     Velocity: Vx={}, Vy={}, Vz={}'.format(vehicle.velocity[0], vehicle.velocity[1], vehicle.velocity[2])) #Current velocity as a three element list [ vx, vy, vz ] (in meter/sec).
-    print('     GPS Info: fix_type={}, num_sat={}'.format(vehicle.gps_0.fix_type, vehicle.gps_0.satellites_visible)) # GPS Info. fix_type: 0-1, no fix; 2, 2D fix; 3, 3D fix. satellites_visible: Number of satellites visible.
-    print('     Battery: voltage={}V, current={}A, level={}%'.format(vehicle.battery.voltage, vehicle.battery.current, vehicle.battery.level))
-    print('     Sonar distance: {} m'.format(vehicle.rangefinder.distance))
-    print('     Heading: {} (degrees from North)'.format(vehicle.heading)) # Current heading in degrees(0~360), where North = 0.
-    print('     Groundspeed: {} m/s'.format(vehicle.groundspeed)) # Current groundspeed in metres/second (double).This attribute is settable. The set value is the default target groundspeed when moving the vehicle using simple_goto() (or other position-based movement commands).
-    print('     Airspeed: {} m/s'.format(vehicle.airspeed)) # Current airspeed in metres/second (double).This attribute is settable. The set value is the default target airspeed when moving the vehicle using simple_goto() (or other position-based movement commands).
+    print('     Global Location: lat={}, lon={}, alt(above sea leavel)={}'.format(builtins.vehicle.location.global_frame.lat, builtins.vehicle.location.global_frame.lon, builtins.vehicle.location.global_frame.alt)) # Absolute GPS coordinate. Its lat and lon attributes are populated shortly after GPS becomes available. The alt can take several seconds longer to populate (from the barometer).
+    print('     Global Location (relative altitude): lat={}, lon={}, alt(relative)={}'.format(builtins.vehicle.location.global_relative_frame.lat, builtins.vehicle.location.global_relative_frame.lon, builtins.vehicle.location.global_relative_frame.alt)) # GPS coordinate with relative altitude.
+    print('     Local Location(NED coordinate): north={}, east={}, down={}'.format(builtins.vehicle.location.local_frame.north, builtins.vehicle.location.local_frame.east, builtins.vehicle.location.local_frame.down)) # North east down (NED), also known as local tangent plane (LTP)
+    print('     Attitude(radians): Pitch={}, Yaw={}, Roll={}'.format(builtins.vehicle.attitude.pitch, builtins.vehicle.attitude.yaw, builtins.vehicle.attitude.roll)) # Pitch, Yaw, and Roll.
+    print('     Velocity: Vx={}, Vy={}, Vz={}'.format(builtins.vehicle.velocity[0], builtins.vehicle.velocity[1], builtins.vehicle.velocity[2])) #Current velocity as a three element list [ vx, vy, vz ] (in meter/sec).
+    print('     GPS Info: fix_type={}, num_sat={}'.format(builtins.vehicle.gps_0.fix_type, builtins.vehicle.gps_0.satellites_visible)) # GPS Info. fix_type: 0-1, no fix; 2, 2D fix; 3, 3D fix. satellites_visible: Number of satellites visible.
+    print('     Battery: voltage={}V, current={}A, level={}%'.format(builtins.vehicle.battery.voltage, builtins.vehicle.battery.current, builtins.vehicle.battery.level))
+    print('     Sonar distance: {} m'.format(builtins.vehicle.rangefinder.distance))
+    print('     Heading: {} (degrees from North)'.format(builtins.vehicle.heading)) # Current heading in degrees(0~360), where North = 0.
+    print('     Groundspeed: {} m/s'.format(builtins.vehicle.groundspeed)) # Current groundspeed in metres/second (double).This attribute is settable. The set value is the default target groundspeed when moving the vehicle using simple_goto() (or other position-based movement commands).
+    print('     Airspeed: {} m/s'.format(builtins.vehicle.airspeed)) # Current airspeed in metres/second (double).This attribute is settable. The set value is the default target airspeed when moving the vehicle using simple_goto() (or other position-based movement commands).
 
 #===================================================
 
