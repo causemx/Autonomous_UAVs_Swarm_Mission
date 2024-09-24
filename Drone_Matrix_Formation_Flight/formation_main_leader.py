@@ -23,7 +23,7 @@ from formation_function import (
     goto_gps_location_relative,
     distance_between_two_gps_coord,
     air_break,
-    return_to_launch,
+    # return_to_launch,
 )
 
 
@@ -124,8 +124,8 @@ print("     leader_lon_home = {}".format(leader_lon_home))
 print("     leader_alt_home = {} (relative)".format(leader_alt_home))
 
 # DOUBLE CHECK the following 4 parameters before each flight mission.
-leader_hover_height = 20  # In meter.
-leader_fly_distance = 20  # In meters.
+leader_hover_height = 5  # In meter.
+leader_fly_distance = 10  # In meters.
 leader_aim_heading_direction = (
     builtins.vehicle.heading
 )  # (use current) # In degree, 0~360. 90=East
@@ -138,20 +138,20 @@ follower1_frame_to_followee = "'" + "body" + "'"  # 'body' or 'local'.
 follower2_followee = follower1_followee
 follower2_frame_to_followee = follower1_frame_to_followee
 
-"""
-# ===================== Formation 1 (squre) =====================
+
+# ===================== Formation 1 (Horizontal) =====================
 # When taking off, drones are already in this formation.
 # Follower 1.
-follower1_hover_height = 20  # In meter.
+follower1_hover_height = 5  # In meter.
 follower1_distance_to_followee = 10  # In meter.
 follower1_azimuth_to_followee = (
-    270  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
+    90  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 # Follower 2.
 follower2_hover_height = 20  # In meter.
 follower2_distance_to_followee = 14.4  # In meter.
 follower2_azimuth_to_followee = (
-    225  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
+    180  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 
 
@@ -257,20 +257,20 @@ for iter_follower in follower_host_tuple:
     CLIENT_send_immediate_command(iter_follower, "air_break()")
 
 
-# ===================== Formation 2 (Diamond) =====================
+# ===================== Formation 2 (square) =====================
 time.sleep(3)
 # Shape 2 definition(Diamond).
 # Follower 1.
-follower1_hover_height = 22  # In meter.
+follower1_hover_height = 5  # In meter.
 follower1_distance_to_followee = 10  # In meter.
 follower1_azimuth_to_followee = (
-    225  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
+    270  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 # Follower 2.
-follower2_hover_height = 24  # In meter.
+follower2_hover_height = 5  # In meter.
 follower2_distance_to_followee = 10  # In meter.
 follower2_azimuth_to_followee = (
-    135  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
+    225  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 
 
@@ -385,20 +385,20 @@ threading.Thread(target=air_break, args=()).start()
 for iter_follower in follower_host_tuple:
     CLIENT_send_immediate_command(iter_follower, "air_break()")
 
-# ===================== Formation 3 (triangle) =====================
+# ===================== Formation 3 (vertical) =====================
 time.sleep(3)
 # Shape 3 (triangle).
 # Follower 1.
-follower1_hover_height = 22  # In meter.
+follower1_hover_height = 5  # In meter.
 follower1_distance_to_followee = 14.4  # In meter.
 follower1_azimuth_to_followee = (
-    225  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
+    0  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 # Follower 2.
-follower2_hover_height = 24  # In meter.
+follower2_hover_height = 5  # In meter.
 follower2_distance_to_followee = 10  # In meter.
 follower2_azimuth_to_followee = (
-    180  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
+    360  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 
 
@@ -516,6 +516,7 @@ for iter_follower in follower_host_tuple:
 
 # ===================== Mission completed, leader and followers go home =====================
 # Wait for follower ready.
+"""
 wait_for_follower_ready(follower_host_tuple)
 print("{} - Mission completed. Return home.".format(time.ctime()))
 
