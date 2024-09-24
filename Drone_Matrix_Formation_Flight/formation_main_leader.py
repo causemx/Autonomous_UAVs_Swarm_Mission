@@ -143,13 +143,13 @@ follower2_frame_to_followee = follower1_frame_to_followee
 # When taking off, drones are already in this formation.
 # Follower 1.
 follower1_hover_height = 5  # In meter.
-follower1_distance_to_followee = 10  # In meter.
+follower1_distance_to_followee = 7  # In meter.
 follower1_azimuth_to_followee = (
     90  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 # Follower 2.
-follower2_hover_height = 20  # In meter.
-follower2_distance_to_followee = 14.4  # In meter.
+follower2_hover_height = 5  # In meter.
+follower2_distance_to_followee = 9.5  # In meter.
 follower2_azimuth_to_followee = (
     180  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
@@ -262,13 +262,13 @@ time.sleep(3)
 # Shape 2 definition(Diamond).
 # Follower 1.
 follower1_hover_height = 5  # In meter.
-follower1_distance_to_followee = 10  # In meter.
+follower1_distance_to_followee = 7  # In meter.
 follower1_azimuth_to_followee = (
     270  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 # Follower 2.
 follower2_hover_height = 5  # In meter.
-follower2_distance_to_followee = 10  # In meter.
+follower2_distance_to_followee = 7  # In meter.
 follower2_azimuth_to_followee = (
     225  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
@@ -390,13 +390,13 @@ time.sleep(3)
 # Shape 3 (triangle).
 # Follower 1.
 follower1_hover_height = 5  # In meter.
-follower1_distance_to_followee = 14.4  # In meter.
+follower1_distance_to_followee = 7.5  # In meter.
 follower1_azimuth_to_followee = (
     0  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
 # Follower 2.
 follower2_hover_height = 5  # In meter.
-follower2_distance_to_followee = 10  # In meter.
+follower2_distance_to_followee = 7  # In meter.
 follower2_azimuth_to_followee = (
     360  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
