@@ -69,12 +69,12 @@ builtins.vehicle.parameters["BRD_SAFETYENABLE"] = 1  # Enable
 # vehicle.parameters['BRD_SAFETYENABLE'] = 0 # Disable
 
 # Start server services.
-start_SERVER_service(vehicle_temp, is_leader, local_host)
+start_SERVER_service(is_leader, local_host)
 
 # Start connection checker. Drone will return home once lost connection.
 router_host = config['ROUTER_HOST']
 threading.Thread(
-    target=CHECK_network_connection, args=(vehicle_temp, router_host,), kwargs={"wait_time": 10}
+    target=CHECK_network_connection, args=(router_host,), kwargs={"wait_time": 10}
 ).start()
 
 # Self arm.

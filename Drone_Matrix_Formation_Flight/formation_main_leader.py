@@ -87,16 +87,16 @@ builtins.vehicle.parameters["BRD_SAFETYENABLE"] = 1  # Enable
 # vehicle.parameters['BRD_SAFETYENABLE'] = 0 # Disable
 
 # Start server services.
-start_SERVER_service(vehicle_temp, is_leader, local_host)
+start_SERVER_service(is_leader, local_host)
 
 # Start connection checker. Drone will return home once lost connection.
 router_host = config['ROUTER_HOST']
 threading.Thread(
-    target=CHECK_network_connection, args=(vehicle_temp, router_host,), kwargs={"wait_time": 10}
+    target=CHECK_network_connection, args=(router_host,), kwargs={"wait_time": 10}
 ).start()
 
 # Arm drone without RC.
-arm_no_RC(vehicle_temp)
+arm_no_RC()
 
 # IP list:
 iris1_host = config['host1']
@@ -203,7 +203,6 @@ print("{} - Leader is going to pointA : {}".format(time.ctime(), pointA))
 threading.Thread(
     target=goto_gps_location_relative,
     args=(
-        vehicle_temp,
         pointA[0],
         pointA[1],
         leader_hover_height,
@@ -251,7 +250,7 @@ while (
 
 # When leader has reached destination, execute air_break().
 # At the same time, send air_break command to all followers immediately.
-threading.Thread(target=air_break, args=(vehicle_temp)).start()
+threading.Thread(target=air_break, args=()).start()
 for iter_follower in follower_host_tuple:
     print(iter_follower)
     CLIENT_send_immediate_command(iter_follower, "air_break()")
@@ -333,7 +332,6 @@ print("{} - Leader is going to pointA : {}".format(time.ctime(), pointA))
 threading.Thread(
     target=goto_gps_location_relative,
     args=(
-        vehicle_temp,
         pointA[0],
         pointA[1],
         leader_hover_height,
@@ -461,7 +459,6 @@ print("{} - Leader is going to pointA : {}".format(time.ctime(), pointA))
 threading.Thread(
     target=goto_gps_location_relative,
     args=(
-        vehicle_temp,
         pointA[0],
         pointA[1],
         leader_hover_height,

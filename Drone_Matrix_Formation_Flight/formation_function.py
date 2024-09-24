@@ -35,7 +35,7 @@ import builtins
 #=============================================================
 
 # Check connections to router.
-def CHECK_network_connection(vehicle, router_host, wait_time=None):
+def CHECK_network_connection(router_host, wait_time=None):
     print('{} - CHECK_network_connection({}) is started.'.format(time.ctime(), router_host))
     if wait_time is None:
         wait_time = 10 # Default wait time is 10 seconds.
@@ -53,7 +53,7 @@ def CHECK_network_connection(vehicle, router_host, wait_time=None):
             if down_counter > 5:
                 print('{} - Reached maximum down times.'.format(time.ctime()))
                 print('{} - Vehicle is returning home...'.format(time.ctime()))
-                vehicle.mode = VehicleMode('RTL')
+                builtins.vehicle.mode = VehicleMode('RTL')
                 break # Terminate while loop.
             else: # Have not reached max down times.
                 print('{} - Check again in 1 seconds'.format(time.ctime()))
@@ -63,12 +63,12 @@ def CHECK_network_connection(vehicle, router_host, wait_time=None):
 
 # This function start server services.
 # Be sure define the ports as global variables before call this function.
-def start_SERVER_service(vehicle, is_leader, local_host):
+def start_SERVER_service(is_leader, local_host):
     # 1) Start send gps coordinate service.
-    threading.Thread(target=SERVER_send_gps_coordinate, args=(vehicle, local_host,)).start()
+    threading.Thread(target=SERVER_send_gps_coordinate, args=(local_host,)).start()
     print('{} - Thread SERVER_send_gps_coordinate is started!'.format(time.ctime()))
     # 2) Start send heading direction service.
-    threading.Thread(target=SERVER_send_heading_direction, args=(vehicle, local_host,)).start()
+    threading.Thread(target=SERVER_send_heading_direction, args=(local_host,)).start()
     print('{} - Thread SERVER_send_heading_direction is started!'.format(time.ctime()))
     # 3) Start send follower status command.
     #    Be sure you have decleared a global variable status_waitForCommand.
@@ -604,19 +604,30 @@ def new_gps_coord_after_offset_inLocalFrame(original_gps_coord, displacement, ro
 
 # Calculate new gps coordinate given one point(lat, lon), direction(bearing), and distance. A bearing of 90 degrees corresponds to East, 180 degrees is South, and so on.
 def new_gps_coord_after_offset_inBodyFrame(original_gps_coord, displacement, current_heading, rotation_degree_relative):
-    # current_heading is in degree, North = 0, East = 90.
-    # Get rotation degree in local frame.
-    rotation_degree_absolute = rotation_degree_relative + current_heading
-    if rotation_degree_absolute >= 360:
-        rotation_degree_absolute -= 360
-    vincentyDistance = geopy.distance.distance(kilometers=displacement)
+    """
+    Calculate new GPS coordinate given one point (lat, lon), direction (bearing), and distance.
+    A bearing of 90 degrees corresponds to East, 180 degrees is South, and so on.
+
+    :param original_gps_coord: Tuple of (latitude, longitude) for the starting point
+    :param displacement: Distance to move in meters
+    :param current_heading: Current heading in degrees (North = 0, East = 90)
+    :param rotation_degree_relative: Rotation degree relative to current heading
+    :return: Tuple of (new_latitude, new_longitude)
+    """
+    # Calculate absolute rotation degree
+    rotation_degree_absolute = (rotation_degree_relative + current_heading) % 360
+
+    # Create Point object for the original GPS coordinate
     original_point = geopy.Point(original_gps_coord[0], original_gps_coord[1])
-    new_gps_coord = vincentyDistance.destination(point=original_point, bearing=rotation_degree_absolute)
-    new_gps_lat = new_gps_coord.latitude
-    new_gps_lon = new_gps_coord.longitude
-    # If convert float to decimal, round will be accurate, but will take 50% more time. Not necessary.
-    #new_gps_lat = decimal.Decimal(new_gps_lat)
-    #new_gps_lon = decimal.Decimal(new_gps_lon)
+
+    # Calculate the new point using geodesic
+    new_point = geopy.distance.geodesic(meters=displacement).destination(original_point, bearing=rotation_degree_absolute)
+
+    # Extract new latitude and longitude
+    new_gps_lat = new_point.latitude
+    new_gps_lon = new_point.longitude
+
+    # Round to 7 decimal places and return
     return (round(new_gps_lat, 7), round(new_gps_lon, 7))
 
 #===================================================
