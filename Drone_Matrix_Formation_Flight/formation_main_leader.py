@@ -543,6 +543,7 @@ for iter_follower in follower_host_tuple:
 # ===================== Mission completed, leader and followers go home =====================
 # Wait for follower ready.
 
+time.sleep(10)
 wait_for_follower_ready(follower_host_tuple)
 print("{} - Mission completed. Return home.".format(time.ctime()))
 
