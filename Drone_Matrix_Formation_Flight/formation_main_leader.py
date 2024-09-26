@@ -138,36 +138,7 @@ follower1_frame_to_followee = "'" + "body" + "'"  # 'body' or 'local'.
 follower2_followee = follower1_followee
 follower2_frame_to_followee = follower1_frame_to_followee
 
-# ===================== Formation 1 (Takeoff and Hover) =====================
-# When all members are ready.
 
-follower1_hover_height = 5  # In meter.
-follower2_hover_height = 5  # In meter.
-
-# Leader takeoff and hover (in square shape).
-threading.Thread(target=takeoff_and_hover, args=(leader_hover_height,)).start()
-# Send takeoff command to all followers.
-# Immediate command must be in string type.
-print("{} - Sending immediate command to : {}.".format(time.ctime(), follower1))
-CLIENT_send_immediate_command(
-    follower1, "takeoff_and_hover({})".format(follower1_hover_height)
-)
-print("{} - Sending immediate command to : {}.".format(time.ctime(), follower2))
-CLIENT_send_immediate_command(
-    follower2, "takeoff_and_hover({})".format(follower2_hover_height)
-)
-
-# Wait for follower ready. Blocking function.
-wait_for_follower_ready(follower_host_tuple)
-
-# When leader has reached destination, execute air_break().
-# At the same time, send air_break command to all followers immediately.
-threading.Thread(target=air_break, args=()).start()
-for iter_follower in follower_host_tuple:
-    print(iter_follower)
-    CLIENT_send_immediate_command(iter_follower, "air_break()")
-
-"""
 # ===================== Formation 1 (Horizontal) =====================
 # When taking off, drones are already in this formation.
 # Follower 1.
@@ -538,7 +509,6 @@ while (
 threading.Thread(target=air_break, args=()).start()
 for iter_follower in follower_host_tuple:
     CLIENT_send_immediate_command(iter_follower, "air_break()")
-"""
 
 # ===================== Mission completed, leader and followers go home =====================
 # Wait for follower ready.

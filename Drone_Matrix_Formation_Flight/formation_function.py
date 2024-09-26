@@ -836,19 +836,19 @@ def return_to_launch():
 
 #===================================================
 
-def get_vehicle_state():
+def get_vehicle_state(vehicle):
     print('{} - Checking current Vehicle Status:'.format(time.ctime()))
-    print('     Global Location: lat={}, lon={}, alt(above sea leavel)={}'.format(builtins.vehicle.location.global_frame.lat, builtins.vehicle.location.global_frame.lon, builtins.vehicle.location.global_frame.alt)) # Absolute GPS coordinate. Its lat and lon attributes are populated shortly after GPS becomes available. The alt can take several seconds longer to populate (from the barometer).
-    print('     Global Location (relative altitude): lat={}, lon={}, alt(relative)={}'.format(builtins.vehicle.location.global_relative_frame.lat, builtins.vehicle.location.global_relative_frame.lon, builtins.vehicle.location.global_relative_frame.alt)) # GPS coordinate with relative altitude.
-    print('     Local Location(NED coordinate): north={}, east={}, down={}'.format(builtins.vehicle.location.local_frame.north, builtins.vehicle.location.local_frame.east, builtins.vehicle.location.local_frame.down)) # North east down (NED), also known as local tangent plane (LTP)
-    print('     Attitude(radians): Pitch={}, Yaw={}, Roll={}'.format(builtins.vehicle.attitude.pitch, builtins.vehicle.attitude.yaw, builtins.vehicle.attitude.roll)) # Pitch, Yaw, and Roll.
-    print('     Velocity: Vx={}, Vy={}, Vz={}'.format(builtins.vehicle.velocity[0], builtins.vehicle.velocity[1], builtins.vehicle.velocity[2])) #Current velocity as a three element list [ vx, vy, vz ] (in meter/sec).
-    print('     GPS Info: fix_type={}, num_sat={}'.format(builtins.vehicle.gps_0.fix_type, builtins.vehicle.gps_0.satellites_visible)) # GPS Info. fix_type: 0-1, no fix; 2, 2D fix; 3, 3D fix. satellites_visible: Number of satellites visible.
-    print('     Battery: voltage={}V, current={}A, level={}%'.format(builtins.vehicle.battery.voltage, builtins.vehicle.battery.current, builtins.vehicle.battery.level))
-    print('     Sonar distance: {} m'.format(builtins.vehicle.rangefinder.distance))
-    print('     Heading: {} (degrees from North)'.format(builtins.vehicle.heading)) # Current heading in degrees(0~360), where North = 0.
-    print('     Groundspeed: {} m/s'.format(builtins.vehicle.groundspeed)) # Current groundspeed in metres/second (double).This attribute is settable. The set value is the default target groundspeed when moving the vehicle using simple_goto() (or other position-based movement commands).
-    print('     Airspeed: {} m/s'.format(builtins.vehicle.airspeed)) # Current airspeed in metres/second (double).This attribute is settable. The set value is the default target airspeed when moving the vehicle using simple_goto() (or other position-based movement commands).
+    print('     Global Location: lat={}, lon={}, alt(above sea leavel)={}'.format(vehicle.location.global_frame.lat, vehicle.location.global_frame.lon, vehicle.location.global_frame.alt)) # Absolute GPS coordinate. Its lat and lon attributes are populated shortly after GPS becomes available. The alt can take several seconds longer to populate (from the barometer).
+    print('     Global Location (relative altitude): lat={}, lon={}, alt(relative)={}'.format(vehicle.location.global_relative_frame.lat, vehicle.location.global_relative_frame.lon, vehicle.location.global_relative_frame.alt)) # GPS coordinate with relative altitude.
+    print('     Local Location(NED coordinate): north={}, east={}, down={}'.format(vehicle.location.local_frame.north, vehicle.location.local_frame.east, vehicle.location.local_frame.down)) # North east down (NED), also known as local tangent plane (LTP)
+    print('     Attitude(radians): Pitch={}, Yaw={}, Roll={}'.format(vehicle.attitude.pitch, vehicle.attitude.yaw, vehicle.attitude.roll)) # Pitch, Yaw, and Roll.
+    print('     Velocity: Vx={}, Vy={}, Vz={}'.format(vehicle.velocity[0], vehicle.velocity[1], vehicle.velocity[2])) #Current velocity as a three element list [ vx, vy, vz ] (in meter/sec).
+    print('     GPS Info: fix_type={}, num_sat={}'.format(vehicle.gps_0.fix_type, vehicle.gps_0.satellites_visible)) # GPS Info. fix_type: 0-1, no fix; 2, 2D fix; 3, 3D fix. satellites_visible: Number of satellites visible.
+    print('     Battery: voltage={}V, current={}A, level={}%'.format(vehicle.battery.voltage, vehicle.battery.current, vehicle.battery.level))
+    print('     Sonar distance: {} m'.format(vehicle.rangefinder.distance))
+    print('     Heading: {} (degrees from North)'.format(vehicle.heading)) # Current heading in degrees(0~360), where North = 0.
+    print('     Groundspeed: {} m/s'.format(vehicle.groundspeed)) # Current groundspeed in metres/second (double).This attribute is settable. The set value is the default target groundspeed when moving the vehicle using simple_goto() (or other position-based movement commands).
+    print('     Airspeed: {} m/s'.format(vehicle.airspeed)) # Current airspeed in metres/second (double).This attribute is settable. The set value is the default target airspeed when moving the vehicle using simple_goto() (or other position-based movement commands).
 
 #===================================================
 

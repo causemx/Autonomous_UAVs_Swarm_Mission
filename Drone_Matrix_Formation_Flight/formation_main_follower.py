@@ -79,7 +79,7 @@ threading.Thread(
 
 # Self arm.
 print("{} - Self arming...".format(time.ctime()))
-arm_no_RC(vehicle_temp)  # Blocking call.
+arm_no_RC()  # Blocking call.
 # Once armed, change status_waitForCommand to True.
 builtins.status_waitForCommand = True
 print(
