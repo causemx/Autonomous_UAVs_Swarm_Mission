@@ -149,7 +149,7 @@ follower1_azimuth_to_followee = (
 )
 # Follower 2.
 follower2_hover_height = 5  # In meter.
-follower2_distance_to_followee = 9.5  # In meter.
+follower2_distance_to_followee = 8  # In meter.
 follower2_azimuth_to_followee = (
     180  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
@@ -388,7 +388,7 @@ time.sleep(3)
 # Shape 3 (triangle).
 # Follower 1.
 follower1_hover_height = 5  # In meter.
-follower1_distance_to_followee = 7.5  # In meter.
+follower1_distance_to_followee = 8  # In meter.
 follower1_azimuth_to_followee = (
     0  # In degree. 'body' frame: 0=Forwar, 90=Right; 'local' frame: 0=North, 90=East.
 )
@@ -512,7 +512,7 @@ for iter_follower in follower_host_tuple:
 
 # ===================== Mission completed, leader and followers go home =====================
 # Wait for follower ready.
-
+"""
 time.sleep(10)
 wait_for_follower_ready(follower_host_tuple)
 print("{} - Mission completed. Return home.".format(time.ctime()))
@@ -531,3 +531,4 @@ time.sleep(2)
 print("{} - Followers have returned home, Leader is returning...".format(time.ctime()))
 return_to_launch()
 print("{} - Leader has returned home.".format(time.ctime()))
+"""
